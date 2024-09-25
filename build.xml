@@ -1,0 +1,269 @@
+<?xml version="1.0"?>
+<project name="WritingAnalytics" >
+
+<property file="tokens/credentials.properties"/>
+
+<target name="tar">
+        <tar destfile="./files.tar">
+    <tarfileset dir="." 
+		excludes="__pycache__/**,
+		          analysis/**,
+				  analytics/**,
+				  data/**,
+				  Docker/MySQL/data/**,
+				  features/**,
+				  Jupyter Notebooks/**,
+				  mail/**,
+				  python/__pycache__/**,
+				  python/submodules/email_sender/venv/**,
+				  python/submodules/drive/venv/**,
+				  temp/**,
+				  unittests/**,
+				  uploads/**,
+				  venv/**,
+				  WriteTrack-Pro/node_modules/**">
+	</tarfileset>
+</tar>
+
+</target>
+
+<target name="deploy">
+	<antcall target="build_svelte"/>
+    <antcall target="tar"/>
+	<scp todir="${user}:${password}@${ip}:/home/${user}"
+	trust="true">
+		<fileset file="files.tar"></fileset>
+	</scp>
+
+	<delete file = "files.tar"/>
+
+	<sshexec host="${ip}"
+		username="${user}"
+		trust="true"
+		usepty="true"
+		password="${password}"
+		command="sudo tar -xvf /home/${user}/files.tar -C /home/${user}/WritingAnalytics;
+				 sudo sh -c 'cd /home/${user}/WritingAnalytics;'"
+		/>
+
+</target>
+
+
+<target name="deploy_software_skills">
+    <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+	<scp todir="${user}:${password}@${ip}:/home/${user}"
+	trust="true">
+		<fileset file="files.tar"></fileset>
+	</scp>
+
+	<delete file = "files.tar"/>
+
+	<sshexec host="${ip}"
+		username="${user}"
+		trust="true"
+		usepty="true"
+		password="${password}"
+		command="sudo tar -xvf /home/${user}/files.tar -C /home/${user}/SoftwareSkills;"
+		/>
+
+</target>
+
+
+<target name="deploy_writingcore">
+    <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+	<scp todir="${user}:${password}@${ip}:/home/${user}"
+	trust="true">
+		<fileset file="files.tar"></fileset>
+	</scp>
+
+	<delete file = "files.tar"/>
+
+	<sshexec host="${ip}"
+		username="${user}"
+		trust="true"
+		usepty="true"
+		password="${password}"
+		command="sudo tar -xvf /home/${user}/files.tar -C /home/${user}/WritingCore;"
+		/>
+
+</target>
+
+
+<target name="deploy_writingcorephd">
+    <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+	<scp todir="${user}:${password}@${ip}:/home/${user}"
+	trust="true">
+		<fileset file="files.tar"></fileset>
+	</scp>
+
+	<delete file = "files.tar"/>
+
+	<sshexec host="${ip}"
+		username="${user}"
+		trust="true"
+		usepty="true"
+		password="${password}"
+		command="sudo tar -xvf /home/${user}/files.tar -C /home/${user}/WritingCorePhD;"
+		/>
+
+</target>
+
+
+
+<target name="dev">
+    <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+   <scp todir="${user}:${password}@${ip}:/home/${user}"
+   trust="true">
+      <fileset file="files.tar"></fileset>
+   </scp>
+
+   <delete file = "files.tar"/>
+
+   <sshexec host="${ip}"
+		username="${user}"
+		trust="true"
+		usepty="true"
+		password="${password}"
+		command="sudo tar -xvf /home/${user}/files.tar -C /home/${user}/WritingAnalyticsDev;
+				 sudo sh -c 'cd /home/${user}/WritingAnalyticsDev; 
+				 	sudo docker-compose -f docker-compose-dev.yml down;'"
+		/>
+<!--sudo docker-compose -f docker-compose-dev.yml up -d;-->
+
+
+</target>
+
+    <target name="dev_jira">
+    <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+
+   <scp todir="${jira_user}:${jira_password}@${jira_ip}:/home/${jira_user}"
+   trust="true">
+      <fileset file="files.tar"></fileset>
+   </scp>
+
+   <delete file = "files.tar"/>
+
+   <sshexec host="${jira_ip}"
+		username="${jira_user}"
+		trust="true"
+		usepty="true"
+		password="${jira_password}"
+		command="sudo tar -xvf /home/${jira_user}/files.tar -C /home/${jira_user}/WritingAnalyticsDev;
+				 sudo sh -c 'cd /home/${jira_user}/WritingAnalyticsDev;
+				 	sudo docker-compose -f docker-compose-dev.yml stop server migration;
+				 	sudo docker-compose -f docker-compose-dev.yml up -d server migration;'"
+		/>
+    </target>
+
+<target name="build_svelte">
+    <exec executable="cp" dir=".">
+            <arg value="./WriteTrack-Pro/src/routes/js/consentForm${app.name}.js"/>
+            <arg value="./WriteTrack-Pro/src/routes/js/consentForm.js"/>
+        </exec>
+    <exec dir="./WriteTrack-Pro" executable="npm" osfamily="unix" failonerror="true">
+        <arg value="run" />
+        <arg value="build" />
+    </exec>
+</target>
+
+
+<target name="deploy_stats_skills">
+<property name="app.name" value="Stats"/>
+ <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+
+<scp todir="${jira_user}:${jira_password}@${jira_ip}:/home/${jira_user}"
+trust="true">
+    <fileset file="files.tar"></fileset>
+</scp>
+
+<delete file = "files.tar"/>
+
+<sshexec host="${jira_ip}"
+    username="${jira_user}"
+    trust="true"
+    usepty="true"
+    password="${jira_password}"
+
+    command="sudo tar -xvf /home/${jira_user}/files.tar -C /home/${jira_user}/StatsSkills;
+         	 sudo sh -c 'cd /home/${jira_user}/StatsSkills;
+			 sudo docker-compose -f docker-compose-stats.yml down;
+			 sudo docker-compose -f docker-compose-stats.yml up -d;'"
+
+    />
+</target>
+
+<target name="deploy_writing_skills">
+    <property name="app.name" value="WritingCore"/>
+ <antcall target="build_svelte"/>
+    <antcall target="tar"/>
+
+<scp todir="${user}:${password}@${ip}:/home/${user}"
+trust="true">
+    <fileset file="files.tar"></fileset>
+</scp>
+
+<delete file = "files.tar"/>
+
+<sshexec host="${ip}"
+    username="${user}"
+    trust="true"
+    usepty="true"
+    password="${password}"
+
+    command="sudo tar -xvf /home/${user}/files.tar -C /home/${user}/WritingSkills;
+             sudo sh -c 'cd /home/${user}/WritingSkills;
+             sudo docker compose -f docker-compose-base.yml -f docker-compose-writing.yml down;
+             sudo docker compose -f docker-compose-base.yml -f docker-compose-writing.yml up -d;'"
+
+    />
+
+
+</target>
+
+<target name="backup-stats-images">
+    <!-- Backup for Service 1 -->
+    <sshexec host="${jira_ip}"
+             username="${jira_user}"
+             trust="true"
+             usepty="true"
+             password="${jira_password}"
+             command="tar -czvf /home/gamecore/StatsSkills/stats_skills_uploads.tar.gz -C /home/gamecore/StatsSkills/uploads ." />
+
+    <!-- Copy the zip file to local machine -->
+    <scp file="${jira_user}@${jira_ip}:/home/gamecore/StatsSkills/stats_skills_uploads.tar.gz"
+         todir="backup/"
+         password="${jira_password}"
+         trust="true" />
+</target>
+
+
+<target name="backup-all">
+    <!-- Backup for Service 1 -->
+    <sshexec host="${ip}"
+    username="${user}"
+    trust="true"
+    usepty="true"
+    password="${password}"
+
+    command=
+    "sudo docker exec writinganalytics-mysql-1 mysqldump -u ${MYSQL_USERNAME} -p${MYSQL_PASSWORD} 'WritingAnalytics' > /home/${user}/service1_dump.sql"
+                 failonerror="true"/>
+
+    <!-- Repeat for other services -->
+
+    <!-- Backup for Service 2 -->
+    <!-- ... -->
+
+    <!-- Backup for Service 3 -->
+    <!-- ... -->
+</target>
+
+
+
+</project>

@@ -1,0 +1,104 @@
+version: '3.3'
+
+
+services:
+
+#  email-sender:
+#    build:
+#      context: python/submodules/email_sender
+#      dockerfile: ./SendMailDockerfile
+#    volumes:
+#      - ./mail:/app/mail
+#      - ./python/submodules/email_sender:/app
+#      - ./email-sender-logs:/var/log
+#      - ./tokens/token.json:/app/token.json
+#      - ./tokens/analytics_secret.py:/app/config_data.py
+#    tty: true
+#    restart: always
+#    environment:
+#      - DEVUCTION_VERSION=TRUE
+
+
+  mysql:
+    image: mysql:8.0.30
+    #ports:
+    #  - "3306:3306"
+    environment:
+      MYSQL_DATABASE: WritingAnalytics
+      MYSQL_ROOT_PASSWORD: qWeRtYuIoP
+    restart: always
+    volumes:
+      - ./Docker/MySQL/:/docker-entrypoint-initdb.d
+      - ./Docker/MySQL/data:/var/lib/mysql
+    networks:
+      - writing_analytics_dev_net
+
+
+  migration:
+    build:
+      context: .
+      dockerfile: ./Docker/MigrationDockerfile
+    depends_on:
+      - mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: qWeRtYuIoP
+      MYSQL_DATABASE: WritingAnalytics
+      MYSQL_HOST: mysql
+    volumes:
+      - ./Docker/MySQL/apply_migrations.py:/usr/local/bin/apply_migrations.py
+      - ./Docker/MySQL/migrations:/migrations
+    entrypoint: ["python", "/usr/local/bin/apply_migrations.py"]
+    networks:
+      - writing_analytics_dev_net
+
+
+#  prometheus:
+#    image: prom/prometheus:v2.47.0
+#    user: root
+#    ports:
+#      - "9090:9090"
+#    volumes:
+#      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+#      - ./data/prometheus:/prometheus
+#    depends_on:
+#      - server
+#    networks:
+#      - writing_analytics_dev_net
+
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./Docker/PythonSchedulerDockerfile
+    volumes:
+      - .:/app
+      - ./config_data_writing_skills.py:/app/config_data.py
+    tty: true
+    restart: always
+    environment:
+      - CONFIGURATION=DEV
+    networks:
+      - writing_analytics_dev_net
+
+
+  server:
+    build:
+      context: .
+      dockerfile: ./Docker/PythonDockerfile
+    volumes:
+      - .:/app
+      - ./config_data_dev.py:/app/config_data.py
+    ports:
+      - "8044:5000"
+    tty: true
+    restart: always
+    environment:
+      - CONFIGURATION=DEV
+    networks:
+      - writing_analytics_dev_net
+    command: ["gunicorn", "--workers=4", "--threads=10", "--timeout=600", "-b 0.0.0.0:5000", "wsgi:app"]
+
+
+networks:
+  writing_analytics_dev_net:
+    driver: bridge

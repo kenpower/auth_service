@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+  mysql:
+    image: mysql:8.0.30
+    environment:
+      MYSQL_ROOT_PASSWORD: qWeRtYuIoP
+      MYSQL_DATABASE: WritingAnalytics
+    restart: always
+    volumes:
+      - ./Docker/MySQL/:/docker-entrypoint-initdb.d
+      - ./Docker/MySQL/data:/var/lib/mysql
+    networks:
+      - writing_skills_net
+
+  server:
+    build:
+      context: .
+      dockerfile: ./Docker/PythonDockerfile
+    volumes:
+      - .:/app
+      - ./config_data_writing_skills.py:/app/config_data.py
+    tty: true
+    restart: always
+    environment:
+      - CONFIGURATION=PROD
+    networks:
+      - writing_skills_net
+    command: ["gunicorn", "--workers=4", "--threads=10", "--timeout=600", "-b 0.0.0.0:5000", "wsgi:app"]
+
+
+networks:
+  writing_skills_net:
+    driver: bridge

@@ -1,0 +1,29 @@
+.ms-login-btn {
+  display: inline-block;
+  padding: 6px 24px;
+  background-color: white;
+  color: #005a9e;
+  font-size: 16px;
+  font-family: "Segoe UI", Arial, sans-serif;
+  border: 1px solid #005a9e; /* Microsoft's blue */
+  border-radius: 23px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.3s ease;
+  margin-top: 16px;
+  width: fit-content;
+}
+
+.ms-login-btn:hover {
+  background-color: #ccc; /* Darker blue on hover */
+}
+
+.ms-login-btn:active {
+  background-color: #aaa; /* Even darker when clicked */
+}
+
+.ms-login-icon {
+  margin-right: 8px;
+  vertical-align: middle;
+}

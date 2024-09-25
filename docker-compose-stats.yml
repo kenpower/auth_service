@@ -1,0 +1,84 @@
+version: '3.3'
+
+
+services:
+
+#  email-sender:
+#    build:
+#      context: python/submodules/email_sender
+#      dockerfile: ./SendMailDockerfile
+#    volumes:
+#      - ./mail:/app/mail
+#      - ./python/submodules/email_sender:/app
+#      - ./email-sender-logs:/var/log
+#      - ./tokens/token.json:/app/token.json
+#      - ./tokens/analytics_secret.py:/app/config_data.py
+#    tty: true
+#    restart: always
+#    environment:
+#      - PRODUCTION_VERSION=TRUE
+
+  mysql:
+    image: mysql:8.0.30
+    #ports:
+    #  - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: qWeRtYuIoP
+      MYSQL_DATABASE: WritingAnalytics
+    restart: always
+    volumes:
+      - ./Docker/MySQL/:/docker-entrypoint-initdb.d
+      - ./Docker/MySQL/data:/var/lib/mysql
+    networks:
+      -   stats_skills_net
+
+  migration:
+    build:
+      context: .
+      dockerfile: ./Docker/MigrationDockerfile
+    depends_on:
+      - mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: qWeRtYuIoP
+      MYSQL_DATABASE: WritingAnalytics
+      MYSQL_HOST: mysql
+    volumes:
+      - ./Docker/MySQL/apply_migrations.py:/usr/local/bin/apply_migrations.py
+      - ./Docker/MySQL/migrations:/migrations
+    entrypoint: ["python", "/usr/local/bin/apply_migrations.py"]
+    networks:
+      - stats_skills_net
+
+  server:
+    build:
+      context: .
+      dockerfile: ./Docker/PythonDockerfile
+    volumes:
+      - .:/app
+      - ./config_data_stats_skills.py:/app/config_data.py
+    ports:
+      - "8051:5000"
+    tty: true
+    restart: always
+    environment:
+      - CONFIGURATION=PROD
+    networks:
+      -   stats_skills_net
+
+  prometheus:
+    image: prom/prometheus:v2.47.0
+    user: root
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./data/prometheus:/prometheus
+    depends_on:
+      - server
+    networks:
+      - stats_skills_net
+
+
+networks:
+  stats_skills_net:
+    driver: bridge

@@ -1,0 +1,16 @@
+version: "3.3"
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: ./Docker/PythonDockerfile
+    volumes:
+      - .:/app
+      - ./config_data_local.py:/app/config_data.py
+    ports:
+      - "8044:5000"
+    tty: true
+    restart: always
+    environment:
+      - CONFIGURATION=DEV
